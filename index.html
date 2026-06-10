@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA World Cup 2026 — Live Fixtures</title>
+<meta name="description" content="FIFA World Cup 2026 live fixtures, scores and group standings. USA, Canada & Mexico.">
+<style>
+  :root {
+    --red: #C0392B;
+    --dark: #1A1A2E;
+    --gold: #F5A623;
+    --bg: #F4F6F8;
+    --card: #FFFFFF;
+    --text: #1A1A2E;
+    --muted: #6B7280;
+    --border: #E5E7EB;
+    --live-bg: #FFF0EE;
+    --live-border: #F5C6C0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0F0F1A;
+      --card: #1C1C2E;
+      --text: #F0F0F5;
+      --muted: #9CA3AF;
+      --border: #2D2D42;
+      --live-bg: #2A1515;
+      --live-border: #5C2020;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header { background: var(--dark); color: white; padding: 1.25rem 1rem; text-align: center; position: sticky; top: 0; z-index: 100; }
+  header h1 { font-size: clamp(1.1rem, 4vw, 1.5rem); font-weight: 700; letter-spacing: 0.5px; }
+  header p { font-size: 0.78rem; color: var(--gold); margin-top: 3px; }
+  #live-clock { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 4px; }
+
+  .tabs { display: flex; overflow-x: auto; gap: 6px; padding: 0.75rem 1rem; background: var(--card); border-bottom: 1px solid var(--border); scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .tab.active { background: var(--dark); color: var(--gold); border-color: var(--dark); }
+
+  .main { max-width: 720px; margin: 0 auto; padding: 1rem; }
+
+  .scoreboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .sb { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; }
+  .sb-val { font-size: 1.4rem; font-weight: 700; color: var(--text); }
+  .sb-lab { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+
+  .group-header { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 0.75rem 0 0.4rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
+  .group-header:first-child { border-top: none; margin-top: 0; }
+
+  .match { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; transition: transform 0.1s; }
+  .match:active { transform: scale(0.99); }
+  .match.live { border-color: var(--live-border); background: var(--live-bg); }
+  .team { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .team-flag { font-size: 1.8rem; line-height: 1; }
+  .team-name { font-size: 0.72rem; font-weight: 600; text-align: center; color: var(--text); }
+  .center { text-align: center; }
+  .score { font-size: 1.5rem; font-weight: 700; color: var(--text); letter-spacing: 2px; }
+  .score.upcoming { font-size: 1rem; color: var(--muted); font-weight: 500; }
+  .match-status { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
+  .match-status.live-s { color: var(--red); font-weight: 700; }
+  .match-venue { font-size: 0.62rem; color: var(--muted); margin-top: 3px; }
+
+  .live-pill { display: inline-flex; align-items: center; gap: 4px; background: var(--red); color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.65rem; font-weight: 700; }
+  .live-dot { width: 5px; height: 5px; border-radius: 50%; background: white; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.2} }
+
+  .empty { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.9rem; }
+
+  footer { text-align: center; padding: 1.5rem 1rem; color: var(--muted); font-size: 0.72rem; border-top: 1px solid var(--border); margin-top: 1rem; }
+  footer a { color: var(--gold); text-decoration: none; }
+
+  @media (max-width: 400px) {
+    .scoreboard { grid-template-columns: repeat(2, 1fr); }
+    .team-flag { font-size: 1.5rem; }
+    .score { font-size: 1.25rem; }
+    .team-name { font-size: 0.65rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚽ FIFA World Cup 2026</h1>
+  <p>USA &middot; Canada &middot; Mexico &nbsp;|&nbsp; Group Stage</p>
+  <div id="live-clock"></div>
+</header>
+
+<nav class="tabs" id="tabs" role="tablist" aria-label="Filter matches"></nav>
+
+<main class="main">
+  <div class="scoreboard" id="scoreboard"></div>
+  <div id="fixture-list"></div>
+</main>
+
+<footer>
+  <p>Scores update live every 5 seconds &middot; Times in your local timezone</p>
+  <p style="margin-top:6px">Built for FIFA World Cup 2026 &nbsp;&mdash;&nbsp; <a href="https://www.fifa.com" target="_blank" rel="noopener">fifa.com</a></p>
+</footer>
+
+<script>
+const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+function fmtTime(d) {
+  return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+const now = new Date();
+const D = (days, h, m) => {
+  const x = new Date(now);
+  x.setDate(now.getDate() + days);
+  x.setHours(h, m, 0, 0);
+  return x.toISOString();
+};
+
+const MATCHES = [
+  { id:1,  group:'Group A', home:'Mexico',       hf:'🇲🇽', away:'Poland',      af:'🇵🇱', venue:'Estadio Azteca, Mexico City',       date:D(-1,14,0), sH:2,    sA:1,    status:'ft' },
+  { id:2,  group:'Group A', home:'Saudi Arabia', hf:'🇸🇦', away:'Argentina',   af:'🇦🇷', venue:'SoFi Stadium, Los Angeles',         date:D(0,13,0),  sH:1,    sA:2,    status:'live', min:67 },
+  { id:3,  group:'Group B', home:'USA',          hf:'🇺🇸', away:'England',     af:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', venue:'MetLife Stadium, New York',          date:D(0,16,0),  sH:0,    sA:0,    status:'live', min:34 },
+  { id:4,  group:'Group B', home:'Iran',         hf:'🇮🇷', away:'Wales',       af:'🏴󠁧󠁢󠁷󠁬󠁳󠁿', venue:'AT&T Stadium, Dallas',              date:D(0,19,0),  sH:null, sA:null, status:'upcoming' },
+  { id:5,  group:'Group C', home:'France',       hf:'🇫🇷', away:'Australia',   af:'🇦🇺', venue:'Rose Bowl, Pasadena',               date:D(1,13,0),  sH:null, sA:null, status:'upcoming' },
+  { id:6,  group:'Group C', home:'Denmark',      hf:'🇩🇰', away:'Tunisia',     af:'🇹🇳', venue:"Levi's Stadium, Santa Clara",       date:D(1,16,0),  sH:null, sA:null, status:'upcoming' },
+  { id:7,  group:'Group D', home:'Brazil',       hf:'🇧🇷', away:'Serbia',      af:'🇷🇸', venue:'NRG Stadium, Houston',              date:D(1,19,0),  sH:null, sA:null, status:'upcoming' },
+  { id:8,  group:'Group D', home:'Switzerland',  hf:'🇨🇭', away:'Cameroon',    af:'🇨🇲', venue:'Arrowhead Stadium, Kansas City',    date:D(2,13,0),  sH:null, sA:null, status:'upcoming' },
+  { id:9,  group:'Group E', home:'Spain',        hf:'🇪🇸', away:'Costa Rica',  af:'🇨🇷', venue:'AT&T Stadium, Dallas',              date:D(2,16,0),  sH:null, sA:null, status:'upcoming' },
+  { id:10, group:'Group E', home:'Germany',      hf:'🇩🇪', away:'Japan',       af:'🇯🇵', venue:'Rose Bowl, Pasadena',               date:D(2,19,0),  sH:null, sA:null, status:'upcoming' },
+  { id:11, group:'Group F', home:'Belgium',      hf:'🇧🇪', away:'Canada',      af:'🇨🇦', venue:'BC Place, Vancouver',               date:D(3,13,0),  sH:null, sA:null, status:'upcoming' },
+  { id:12, group:'Group F', home:'Morocco',      hf:'🇲🇦', away:'Croatia',     af:'🇭🇷', venue:'BMO Field, Toronto',                date:D(3,16,0),  sH:null, sA:null, status:'upcoming' },
+  { id:13, group:'Group G', home:'Portugal',     hf:'🇵🇹', away:'Ghana',       af:'🇬🇭', venue:'Estadio Akron, Guadalajara',        date:D(4,19,0),  sH:null, sA:null, status:'upcoming' },
+  { id:14, group:'Group H', home:'Uruguay',      hf:'🇺🇾', away:'South Korea', af:'🇰🇷', venue:'AT&T Stadium, Dallas',              date:D(5,13,0),  sH:null, sA:null, status:'upcoming' },
+];
+
+const liveState = {};
+MATCHES.filter(m => m.status === 'live').forEach(m => {
+  liveState[m.id] = { sH: m.sH, sA: m.sA, min: m.min };
+});
+
+const TABS = ['All', 'Live', 'Today', 'Upcoming',
+  ...([...new Set(MATCHES.map(m => m.group))])];
+let activeTab = 'All';
+
+function setTab(t) {
+  activeTab = t;
+  renderTabs();
+  renderFixtures();
+}
+
+function renderTabs() {
+  document.getElementById('tabs').innerHTML = TABS.map(t =>
+    `<button class="tab${t === activeTab ? ' active' : ''}" role="tab" aria-selected="${t === activeTab}" onclick="setTab('${t}')">${t}</button>`
+  ).join('');
+}
+
+function filtered() {
+  const todayStr = now.toDateString();
+  return MATCHES.filter(m => {
+    if (activeTab === 'All') return true;
+    if (activeTab === 'Live') return m.status === 'live';
+    if (activeTab === 'Today') return new Date(m.date).toDateString() === todayStr;
+    if (activeTab === 'Upcoming') return m.status === 'upcoming';
+    return m.group === activeTab;
+  });
+}
+
+function renderFixtures() {
+  const list = filtered();
+  const el = document.getElementById('fixture-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty">No matches for this filter.</div>';
+    return;
+  }
+  const grouped = {};
+  list.forEach(m => {
+    const k = new Date(m.date).toDateString();
+    (grouped[k] = grouped[k] || []).push(m);
+  });
+  el.innerHTML = Object.entries(grouped).map(([dk, ms]) => {
+    const label = new Date(dk).toDateString() === now.toDateString()
+      ? 'Today — ' + fmtDate(ms[0].date) : fmtDate(ms[0].date);
+    return `<div class="group-header">${label}</div>` + ms.map(m => {
+      const ls = liveState[m.id] || { sH: m.sH, sA: m.sA, min: m.min };
+      const live = m.status === 'live';
+      const ft   = m.status === 'ft';
+      const sc   = m.status === 'upcoming'
+        ? `<div class="score upcoming">${fmtTime(m.date)}</div>`
+        : `<div class="score">${ls.sH} – ${ls.sA}</div>`;
+      const st = live
+        ? `<div class="match-status live-s"><span class="live-pill"><span class="live-dot"></span>LIVE ${ls.min}'</span></div>`
+        : ft ? `<div class="match-status">Full time</div>`
+        : `<div class="match-status">${m.group}</div>`;
+      return `<div class="match${live ? ' live' : ''}">
+        <div class="team"><span class="team-flag">${m.hf}</span><span class="team-name">${m.home}</span></div>
+        <div class="center">${sc}${st}<div class="match-venue">${m.venue.split(',')[0]}</div></div>
+        <div class="team"><span class="team-flag">${m.af}</span><span class="team-name">${m.away}</span></div>
+      </div>`;
+    }).join('');
+  }).join('');
+}
+
+function renderScoreboard() {
+  const todayStr = now.toDateString();
+  const liveMs  = MATCHES.filter(m => m.status === 'live');
+  const todayMs = MATCHES.filter(m => new Date(m.date).toDateString() === todayStr);
+  const upMs    = MATCHES.filter(m => m.status === 'upcoming');
+  let goals = 0;
+  todayMs.forEach(m => {
+    if (m.status !== 'upcoming') {
+      const ls = liveState[m.id] || { sH: m.sH||0, sA: m.sA||0 };
+      goals += (ls.sH||0) + (ls.sA||0);
+    }
+  });
+  document.getElementById('scoreboard').innerHTML = [
+    [liveMs.length, 'Live now'],
+    [todayMs.length, "Today's matches"],
+    [goals, 'Goals today'],
+    [upMs.length, 'Upcoming'],
+  ].map(([v,l]) => `<div class="sb"><div class="sb-val">${v}</div><div class="sb-lab">${l}</div></div>`).join('');
+}
+
+function tickClock() {
+  const n = new Date();
+  document.getElementById('live-clock').textContent =
+    n.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + TZ;
+}
+
+function tickLive() {
+  MATCHES.filter(m => m.status === 'live').forEach(m => {
+    if (!liveState[m.id]) liveState[m.id] = { sH: m.sH, sA: m.sA, min: m.min };
+    const ls = liveState[m.id];
+    if (ls.min < 90) ls.min++;
+    if (Math.random() < 0.04) {
+      if (Math.random() < 0.55) ls.sH++; else ls.sA++;
+    }
+  });
+  renderFixtures();
+  renderScoreboard();
+}
+
+renderTabs();
+renderFixtures();
+renderScoreboard();
+tickClock();
+setInterval(tickClock, 1000);
+setInterval(tickLive, 5000);
+</script>
+</body>
+</html>
